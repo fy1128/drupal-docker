@@ -1,0 +1,61 @@
+version: '3.3'
+
+services:
+  drupal:
+    image: fy1128/drupal:8.6-fpm-alpine
+    volumes:
+      - drupal_root:/var/www/html
+    restart: always
+  apache2_mpm:
+    image: fy1128/httpd:alpine
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - drupal_root:/var/www/html
+      - apache_conf:/temp_configs_dir
+    links:
+      - drupal
+    depends_on:
+      - drupal
+    restart: always
+    
+  db:
+    image: mysql:5.5
+    environment:
+      MYSQL_ROOT_PASSWORD: PASSWORD
+      MYSQL_DATABASE: drupal
+    volumes:
+        - drupal_database:/var/lib/mysql
+        - drupal_db_log:/var/log/mysql
+    restart: always
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
+volumes:
+  drupal_root:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/docker/drupal/html
+      o: bind
+  drupal_database:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/docker/drupal/database
+      o: bind
+  drupal_db_log:
+    driver_opts:
+      type: none
+      device: /home/docker/drupal/logs/mysql
+  apache_conf:
+    driver: local
+    driver_opts:
+      type: none
+      device: /home/docker/drupal/apache/conf
+      o: bind
+
